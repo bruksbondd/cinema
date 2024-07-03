@@ -18,13 +18,8 @@ export class UpdateUserDto {
   @IsOptional()
   email?: string;
 
-  @ApiProperty()
-  @MinLength(6, {
-    message: 'Password should be min 6 symbols!',
-  })
-  @IsString()
-  password: string;
 
+  @ApiProperty()
   @IsEnum(UserRole)
   role: UserRole;
 }

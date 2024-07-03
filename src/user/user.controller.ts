@@ -1,9 +1,23 @@
-import { Controller, Post, Get, HttpCode, Body, Query, Param, Put, UsePipes, ValidationPipe, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  HttpCode,
+  Body,
+  Query,
+  Param,
+  Put,
+  UsePipes,
+  ValidationPipe,
+  Delete,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { CurrentUser } from './decorators/user.decorator';
 import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { NotFoundError } from 'rxjs';
 
 @ApiBearerAuth('defaultBearerAuth')
 @ApiTags('users')
@@ -11,13 +25,11 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  
   @Get('profile')
   @Auth()
   async getprofile(@CurrentUser('id') id: string) {
     return this.userService.getById(id);
   }
-
 
   @Post('profile/favorites')
   @HttpCode(200)
@@ -40,25 +52,24 @@ export class UserController {
   @Get('by-id/:id')
   @Auth('admin')
   async getById(@Param('id') id: string) {
-    return this.userService.getById(id)
+    return this.userService.getById(id);
   }
 
-  @UsePipes(new ValidationPipe)
+  @UsePipes(new ValidationPipe())
   @Put(':id')
   @HttpCode(200)
   @Auth('admin')
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateUserDto,
-  ) {
-    return this.userService.update(id, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    const updatedUser = this.userService.update(id, dto);
+    if (!updatedUser) throw new NotFoundException('User not found');
+    return updatedUser;
   }
-
 
   @Delete(':id')
   @Auth('admin')
   async delete(@Param('id') id: string) {
-    return this.userService.delete(id)
+    const deletedUser = this.userService.delete(id);
+    if (!deletedUser) throw new NotFoundException('User not found');
+    return deletedUser;
   }
-
 }
